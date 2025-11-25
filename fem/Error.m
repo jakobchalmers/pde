@@ -1,4 +1,4 @@
-function error = Solve(c, V, D, p, g_hat, h_hat, time)
+function error = Error(c, V, D, p, g_hat, h_hat, time)
     lambda = diag(D);
     u_hat_t = cos(c*sqrt(lambda)*time) .* g_hat + ( sin(c*sqrt(lambda)*time) ./ (c*sqrt(lambda)) ) .* h_hat;
     u_t = V * u_hat_t;
