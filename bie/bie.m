@@ -1,4 +1,6 @@
-N = 100;
+%%
+
+N = 300;
 tvec = linspace(-pi + 2*pi/N, pi, N);
 rvec = 3 + cos(4*tvec+pi);
 rprimvec = - 4*sin(4*tvec+pi);
@@ -21,9 +23,11 @@ for i=1:N
     end
 end
 
-% imagesc(tvec, tvec, Kmat.')
-% axis xy
-% colorbar
+imagesc(tvec, tvec, Kmat.')
+axis xy
+colorbar
+
+%%
 
 dsdt = sqrt(rprimvec.^2 + rvec.^2)';
 gvec = ( exp( (y1 + 0.3*y2) / 3 ) .* sin( (0.3*y1 - y2) / 3 ) )';
@@ -31,7 +35,8 @@ hvec = ( eye(N)/2 + 2*pi/N * Kmat * diag(dsdt) ) \ gvec;
 
 % Compute double layer potential
 
-M = 50;
+delta = 0.01;
+M = 8 / delta;
 x1field = linspace(-4, 4, M);
 x2field = linspace(-4, 4, M);
 ufield = zeros(M, M);
@@ -58,6 +63,31 @@ end
 imagesc(x1field, x2field, error.');
 % imagesc(x1field, x2field, u0.');
 axis xy
+clim([-15 0]);
 colormap turbo
 pbaspect([1 1 1]);
 colorbar
+
+%% Exercise 2
+
+%%
+
+even = ( 1:1:(N/2) ) * 2;
+odd = -1 + (1:1:(N/2)) * 2;
+vvec = zeros(N, 1);
+
+% Compute v(x) at even x using odd y
+for i = even
+    imvec_even = 1 / (2*pi) * ( (y1(odd) - y1(i)) .* nu2(odd) - (y2(odd) - y2(i)) .* nu1(odd) ) ./ ( (y1(odd) - y1(i)).^2 + (y2(odd) - y2(i)).^2 );
+    vvec(i) = (imvec_even * (hvec(odd) .* dsdt(odd))) * 2*pi/(N/2);
+end
+
+% Compute v(x) at odd x using even y
+for i = odd
+    imvec_odd = 1 / (2*pi) * ( (y1(even) - y1(i)) .* nu2(even) - (y2(even) - y2(i)) .* nu1(even) ) ./ ( (y1(even) - y1(i)).^2 + (y2(even) - y2(i)).^2 );
+    vvec(i) = (imvec_odd * (hvec(even) .* dsdt(even))) * 2*pi/(N/2);
+end
+
+v_exact = exp( (y1 + 0.3*y2) / 3 ) .* cos( (0.3*y1 - y2) / 3 );
+plot(tvec, vvec, tvec, v_exact);
+legend("v-numeric", "v-analytic");

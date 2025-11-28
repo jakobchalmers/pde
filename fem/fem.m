@@ -1,6 +1,6 @@
 %% Polygon
-pdepoly([1 0.75 -0.75 -1 -1 -0.75 0.75 1], [0.25 0.5 0.5 0.25 -0.25 -0.5 -0.5 -0.25])
-% pdepoly([0 0 pi pi], [0 pi pi 0]);
+% pdepoly([1 0.75 -0.75 -1 -1 -0.75 0.75 1], [0.25 0.5 0.5 0.25 -0.25 -0.5 -0.5 -0.25])
+pdepoly([0 0 pi pi], [0 pi pi 0]);
 
 %% Exercise 1
 % save("p_h4", "p");
@@ -88,8 +88,8 @@ save("mean_error.mat", "mean_error");
 
 %% 
 % Compute approximate triangle side length h
-num_nodes = [175; 655; 2533; 9961];
-h = sqrt(2 * pi^2 ./ num_nodes);
+N_triangles = [306; 1224; 4896; 19584];
+h = sqrt(2 * pi^2 ./ N_triangles);
 
 % Find N in Ordo(h^N)
 mean_error = load("data/mean_error.mat").mean_error;
@@ -134,9 +134,19 @@ end
 % Find time T of hitting right edge and deduced propagation speed
 [max_amp, time_index] = max(amp_vector);
 T = (time_index-1)*dt
-c_estimate = 0.5 / c
+c_estimate = 0.5 / T
 
-pdeplot(p, [], t, 'XYData', u_t, 'ZData', u_t, 'Mesh', 'off');
+
+%% u_T plot
+% Compute u_T
+time = T;
+u_hat_T = cos(c*sqrt(lambda)*time) .* g_hat + ( sin(c*sqrt(lambda)*time) ./ (c*sqrt(lambda)) ) .* h_hat;
+u_T = V * u_hat_T; % Save as IC 
+pdeplot(p, [], t, 'XYData', u_T, 'ZData', u_T, 'Mesh', 'off');
+xlabel("x");
+ylabel("y");
+zlabel("u");
+title("u_{T}(x,y)")
 colormap turbo
 
 %% 3 b)
@@ -153,17 +163,28 @@ time = -9;
 v_hat_neg9 = cos(c*sqrt(lambda)*time) .* u_hat_10 + ( sin(c*sqrt(lambda)*time) ./ (c*sqrt(lambda)) ) .* del_t_u_hat_10;
 v_neg9 = V * v_hat_neg9;
 
-
 %% u_10 plot
 pdeplot(p, [], t, 'XYData', u_10, 'ZData', u_10, 'Mesh', 'off');
+xlabel("x");
+ylabel("y");
+zlabel("u");
+title("u_{10}(x,y)")
+
 colormap turbo
 
 %% del_t(u_10) plot
 pdeplot(p, [], t, 'XYData', del_t_u_10, 'ZData', del_t_u_10, 'Mesh', 'off');
+xlabel("x");
+ylabel("y");
+zlabel("\partial_t u");
+title("\partial_t u_{10}(x,y)")
 colormap turbo
 
 %% v_{-9} plot
 pdeplot(p, [], t, 'XYData', v_neg9, 'ZData', v_neg9, 'Mesh', 'off');
+ylabel("y");
+zlabel("v");
+title("v_{-9}(x,y)")
 colormap turbo
 
 

@@ -1,0 +1,89 @@
+%%
+
+N = 300;
+tvec = linspace(-pi + 2*pi/N, pi, N);
+rvec = 3 + cos(4*tvec+pi);
+rprimvec = - 4*sin(4*tvec+pi);
+rbisvec = - 16*cos(4*tvec+pi);
+y1 = rvec .* cos(tvec);
+y2 = rvec .* sin(tvec);
+nu1 = rvec .* cos(tvec) + rprimvec .* sin(tvec);
+nu2 = rvec .* sin(tvec) - rprimvec .* cos(tvec);
+nu1 = nu1 ./ sqrt( rvec.^2 + rprimvec.^2 );
+nu2 = nu2 ./ sqrt( rvec.^2 + rprimvec.^2 );
+
+Kmat = zeros(N, N);
+for i=1:N
+    for j=1:N
+        if i == j
+            Kmat(i,j) = 1 / (2*pi) * (rprimvec(i)^2 - rbisvec(i) * rvec(i) / 2 + rvec(i)^2 / 2) / (rprimvec(i)^2 + rvec(i)^2)^(3/2);
+        else
+            Kmat(i,j) = 1 / (2*pi) * ( (y1(j) - y1(i)) * nu1(j) + (y2(j) - y2(i)) * nu2(j) ) / ( (y1(j) - y1(i))^2 + (y2(j) - y2(i))^2 );
+        end
+    end
+end
+
+imagesc(tvec, tvec, Kmat.')
+axis xy
+colorbar
+
+%%
+
+dsdt = sqrt(rprimvec.^2 + rvec.^2)';
+gvec = ( exp( (y1 + 0.3*y2) / 3 ) .* sin( (0.3*y1 - y2) / 3 ) )';
+hvec = ( eye(N)/2 + 2*pi/N * Kmat * diag(dsdt) ) \ gvec;
+
+% Compute double layer potential
+
+delta = 0.01;
+M = 8 / delta;
+x1field = linspace(-4, 4, M);
+x2field = linspace(-4, 4, M);
+ufield = zeros(M, M);
+u0 = zeros(M, M);
+error = -15 * ones(M, M);
+
+for ix1 = 1:M
+    for ix2 = 1:M
+        x1 = x1field(ix1);
+        x2 = x2field(ix2);
+        t = angle( complex(x1, x2) );
+        radius = 3 + cos(4*t+pi);
+        if (x1^2 + x2^2) < radius^2
+            phivec = 1 / (2*pi) * ( (y1 - x1) .* nu1 + (y2 - x2) .* nu2 ) ./ ( (y1 - x1).^2 + (y2 - x2).^2 );
+            ufield(ix1, ix2) = (phivec * (hvec .* dsdt)) * 2*pi/N;
+
+            u0(ix1, ix2) = exp( (x1 + 0.3*x2) / 3 ) .* sin( (0.3*x1 - x2) / 3 );
+            error(ix1, ix2) = log10( abs( u0(ix1, ix2) - ufield(ix1, ix2) ) );
+
+        end
+    end
+end
+
+imagesc(x1field, x2field, error.');
+% imagesc(x1field, x2field, u0.');
+axis xy
+clim([-15 0]);
+colormap turbo
+pbaspect([1 1 1]);
+colorbar
+
+%% Exercise 2
+
+%%
+
+even = ( 1:1:(N/2) ) * 2;
+odd = -1 + (1:1:(N/2)) * 2;
+
+for i=1:(N/2)
+imvec_even = 1 / (2*pi) * ( (y1(odd) - y1(even)) .* nu2(odd) - (y2(odd) - y2(even)) .* nu1(odd) ) ./ ( (y1(odd) - y1(even)).^2 + (y2(odd) - y2(even)).^2 );
+imvec_odd = 1 / (2*pi) * ( -(y1(odd) - y1(even)) .* nu2(even) + (y2(odd) - y2(even)) .* nu1(even) ) ./ ( (y1(odd) - y1(even)).^2 + (y2(odd) - y2(even)).^2 );
+vvec_even = (imvec_even * (hvec(odd) .* dsdt(odd))) * 2*pi/(N/2);
+vvec_odd = (imvec_odd * (hvec(even) .* dsdt(even))) * 2*pi/(N/2);
+
+size(vvec_even)
+axis xy
+clim([-15 0]);
+colormap turbo
+pbaspect([1 1 1]);
+colorbar
