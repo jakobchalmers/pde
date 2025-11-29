@@ -1,6 +1,6 @@
 %%
 
-N = 300;
+N = 10000;
 tvec = linspace(-pi + 2*pi/N, pi, N);
 rvec = 3 + cos(4*tvec+pi);
 rprimvec = - 4*sin(4*tvec+pi);
@@ -61,9 +61,12 @@ for ix1 = 1:M
 end
 
 imagesc(x1field, x2field, error.');
-% imagesc(x1field, x2field, u0.');
-axis xy
 clim([-15 0]);
+
+% imagesc(x1field, x2field, ufield.');
+% clim([-2 2]);
+
+axis xy
 colormap turbo
 pbaspect([1 1 1]);
 colorbar
@@ -91,3 +94,53 @@ end
 v_exact = exp( (y1 + 0.3*y2) / 3 ) .* cos( (0.3*y1 - y2) / 3 );
 plot(tvec, vvec, tvec, v_exact);
 legend("v-numeric", "v-analytic");
+
+%% Exercise 3
+
+dsdt = sqrt(rprimvec.^2 + rvec.^2)';
+gvec = ( exp( (y1 + 0.3*y2) / 3 ) .* sin( (0.3*y1 - y2) / 3 ) )';
+hvec = ( eye(N)/2 + 2*pi/N * Kmat * diag(dsdt) ) \ gvec;
+
+% Compute double layer potential
+
+delta = 0.01;
+M = 8 / delta;
+z1field = linspace(-4, 4, M);
+z2field = linspace(-4, 4, M);
+ufield = zeros(M, M);
+u0 = zeros(M, M);
+error = -15 * ones(M, M);
+
+for iz1 = 1:M
+    for iz2 = 1:M
+        z1 = z1field(iz1);
+        z2 = z2field(iz2);
+        t = angle( complex(z1, z2) );
+        radius = 3 + cos(4*t+pi);
+        if (z1^2 + z2^2) < radius^2
+            phivec = 1 / (2*pi) * ( ...
+                nu1 .* ( (y1 - z1) .* gvec' + (y2 - z2) .* vvec' ) + ...
+                nu2 .* ( (y2 - z2) .* gvec' - (y1 - z1) .* vvec' ) ...
+                ) ./ ( (y1 - z1).^2 + (y2 - z2).^2 );
+                
+            ufield(iz1, iz2) = (phivec * dsdt) * 2*pi/N;
+
+
+            u0(iz1, iz2) = exp( (z1 + 0.3*z2) / 3 ) .* sin( (0.3*z1 - z2) / 3 );
+            error(iz1, iz2) = log10( abs( u0(iz1, iz2) - ufield(iz1, iz2) ) );
+
+        end
+    end
+end
+
+imagesc(z1field, z2field, error.');
+clim([-15 0]);
+
+% imagesc(z1field, z2field, ufield.');
+% clim([-2 2]);
+
+axis xy
+colormap turbo
+pbaspect([1 1 1]);
+colorbar
+
