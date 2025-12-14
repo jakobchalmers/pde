@@ -1,6 +1,7 @@
 %% Polygon
 % pdepoly([1 0.75 -0.75 -1 -1 -0.75 0.75 1], [0.25 0.5 0.5 0.25 -0.25 -0.5 -0.5 -0.25])
-pdepoly([0 0 pi pi], [0 pi pi 0]);
+% pdepoly([0 0 pi pi], [0 pi pi 0]);
+pdepoly([-1 -1 1 1], [-0.5 0.5 0.5 -0.5]);
 
 %% Exercise 1
 % save("p_h4", "p");
@@ -187,8 +188,93 @@ zlabel("v");
 title("v_{-9}(x,y)")
 colormap turbo
 
+%% Exercise 4 - Neumann
+
+% Initital conditions
+c = 0.3;
+g = exp( -100*( (p(1,:) - 0.5).^2 + p(2, :).^2 ) )';
+h = p(1,:)' * 0;
+g_hat = V \ g;
+h_hat = V \ h;
+
+time = 2.5;
+u_hat = cos(c*sqrt(lambda)*time) .* g_hat + ( sin(c*sqrt(lambda)*time) ./ (c*sqrt(lambda)) ) .* h_hat;
+u = V * u_hat; % Save as IC 
+
+pdeplot(p, [], t, 'XYData', u, 'ZData', u, 'Mesh', 'off');
+xlabel("x");
+ylabel("y");
+zlabel("u");
+title("u_{2.5}(x,y) - Neumann")
+colormap turbo
+
+%% Exercise 4 - Dirichlet
+num_triangles = size(t, 2);
+num_vertices = size(p, 2);
+ANeu = zeros(num_vertices, num_vertices);
+BNeu = zeros(num_vertices, num_vertices);
+
+for i_triangle=1:num_triangles
+    indeces = t(1:3, i_triangle); % Indices for nodes in the triangle
+
+    % Add contributions from the triangle to A
+    ANeu(indeces, indeces) = ANeu(indeces, indeces) + StiffnessMatrix( p(:, indeces) );
+
+    % Add contributions from the triangle to B
+    BNeu(indeces, indeces) = BNeu(indeces, indeces) + MassMatrix( p(:, indeces) );
+end
+
+intnodes = setdiff(1:num_vertices, e(1,:)); % list of interior node indices
+ADir = ANeu(intnodes, intnodes); % remove A_ij if i or j is on the boundary
+BDir = BNeu(intnodes, intnodes); % remove B_ij if i or j is on the boundary
 
 
+[V, D] = eig(ADir,BDir); % Solve Rayleigh Ritz
+lambda = diag(D); % vector of eigenvalues
 
-    
- 
+%%
+
+% Initital conditions
+c = 0.3;
+int_node_coords = p(:, intnodes);
+g = exp( -100*( (int_node_coords(1,:) - 0.5).^2 + int_node_coords(2, :).^2 ) )';
+h = int_node_coords(1,:)' * 0;
+g_hat = V \ g;
+h_hat = V \ h;
+
+% Compute u
+time = 3;
+u_hat = cos(c*sqrt(lambda)*time) .* g_hat + ( sin(c*sqrt(lambda)*time) ./ (c*sqrt(lambda)) ) .* h_hat;
+uDir = V * u_hat; % Save as IC
+
+u = zeros(num_vertices, 1);
+u(intnodes) = uDir;
+pdeplot(p, [], t, 'XYData', u, 'ZData', u, 'Mesh', 'off');
+xlabel("x");
+ylabel("y");
+zlabel("u");
+title("u_{2.5}(x,y) - Dirichlet")
+colormap turbo
+
+%% Exercise 5
+
+% Initital conditions
+c = 0.3;
+omega = 5;
+f = 1 + p(1,:)*0;
+M_width = 0.05;
+M_height = 0.5;
+f = ( f .* ( p(1,:)<M_width ) .* ( p(1,:)>-M_width ) .* ( p(2,:)<M_height ) .* ( p(2,:)>-M_height ) )';
+f_hat = V \ f;
+
+% Solution
+time = 100;
+u_hat = - f_hat .* ( cos(c*sqrt(lambda)*time) - cos(omega*time) ) ./ (c^2*lambda - omega^2);
+u = V * u_hat;
+
+pdeplot(p, [], t, 'XYData', u, 'ZData', u, 'Mesh', 'off');
+xlabel("x");
+ylabel("y");
+zlabel("u");
+title(sprintf("u_{%.1f}(x,y)", time))
+colormap turbo

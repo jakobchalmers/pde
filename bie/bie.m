@@ -1,8 +1,9 @@
 %% Exercise 1
 
 N = 300; % number of points on the boundary
-tvec = linspace(-pi + 2*pi/N, pi, N); % angle vector in polar coord
-rvec = 3 + cos(4*tvec+pi); % radius vector in polar coord
+% Parametrize all relevant variables in terms of t and r
+tvec = linspace(-pi + 2*pi/N, pi, N);
+rvec = 3 + cos(4*tvec+pi);
 rprimvec = - 4*sin(4*tvec+pi); 
 rbisvec = - 16*cos(4*tvec+pi);
 y1 = rvec .* cos(tvec);
@@ -33,7 +34,7 @@ end
 % colorbar
 
 dsdt = sqrt(rprimvec.^2 + rvec.^2)'; % diagonal of Sigma matrix
-% Boundary confition
+% Boundary condition
 gvec = ( exp( (y1 + 0.3*y2) / 3 ) .* sin( (0.3*y1 - y2) / 3 ) )';
 % Solve (I/2 + 2pi/N K Sigma)h = g
 hvec = ( eye(N)/2 + 2*pi/N * Kmat * diag(dsdt) ) \ gvec;
