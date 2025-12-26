@@ -1,7 +1,7 @@
 %% Polygon
-% pdepoly([1 0.75 -0.75 -1 -1 -0.75 0.75 1], [0.25 0.5 0.5 0.25 -0.25 -0.5 -0.5 -0.25])
+pdepoly([1 0.75 -0.75 -1 -1 -0.75 0.75 1], [0.25 0.5 0.5 0.25 -0.25 -0.5 -0.5 -0.25])
 % pdepoly([0 0 pi pi], [0 pi pi 0]);
-pdepoly([-1 -1 1 1], [-0.5 0.5 0.5 -0.5]);
+% pdepoly([-1 -1 1 1], [-0.5 0.5 0.5 -0.5]);
 
 %% Exercise 1
 % save("p_h4", "p");
@@ -199,7 +199,7 @@ h_hat = V \ h;
 
 time = 2.5;
 u_hat = cos(c*sqrt(lambda)*time) .* g_hat + ( sin(c*sqrt(lambda)*time) ./ (c*sqrt(lambda)) ) .* h_hat;
-u = V * u_hat; % Save as IC 
+u = V * u_hat;
 
 pdeplot(p, [], t, 'XYData', u, 'ZData', u, 'Mesh', 'off');
 xlabel("x");
@@ -224,6 +224,7 @@ for i_triangle=1:num_triangles
     BNeu(indeces, indeces) = BNeu(indeces, indeces) + MassMatrix( p(:, indeces) );
 end
 
+% Remove boundary nodes from A and B
 intnodes = setdiff(1:num_vertices, e(1,:)); % list of interior node indices
 ADir = ANeu(intnodes, intnodes); % remove A_ij if i or j is on the boundary
 BDir = BNeu(intnodes, intnodes); % remove B_ij if i or j is on the boundary
@@ -243,12 +244,14 @@ g_hat = V \ g;
 h_hat = V \ h;
 
 % Compute u
-time = 3;
+time = 2.5;
 u_hat = cos(c*sqrt(lambda)*time) .* g_hat + ( sin(c*sqrt(lambda)*time) ./ (c*sqrt(lambda)) ) .* h_hat;
-uDir = V * u_hat; % Save as IC
+uDir = V * u_hat;
 
+% Add back boundary nodes for plotting
 u = zeros(num_vertices, 1);
-u(intnodes) = uDir;
+u(intnodes) = uDir; 
+
 pdeplot(p, [], t, 'XYData', u, 'ZData', u, 'Mesh', 'off');
 xlabel("x");
 ylabel("y");
@@ -258,7 +261,7 @@ colormap turbo
 
 %% Exercise 5
 
-% Initital conditions
+% Source f
 c = 0.3;
 omega = 5;
 f = 1 + p(1,:)*0;
@@ -268,7 +271,7 @@ f = ( f .* ( p(1,:)<M_width ) .* ( p(1,:)>-M_width ) .* ( p(2,:)<M_height ) .* (
 f_hat = V \ f;
 
 % Solution
-time = 100;
+time = 100 ;
 u_hat = - f_hat .* ( cos(c*sqrt(lambda)*time) - cos(omega*time) ) ./ (c^2*lambda - omega^2);
 u = V * u_hat;
 

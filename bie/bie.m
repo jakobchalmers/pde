@@ -196,3 +196,49 @@ cb.Label.String = "log10|u-u_0|";
 % Check maximum errors
 sorted_error = sort(error(:), 'descend');
 sorted_error(1:10)
+
+%% Exercise 4
+
+pole = [14; 14]; % fixed pole in D-
+k = 1;
+N = 300; % number of points on the boundary
+% Parametrize all relevant variables in terms of t and r
+tvec = linspace(-pi + 2*pi/N, pi, N);
+rvec = 3 + cos(4*tvec+pi);
+rprimvec = - 4*sin(4*tvec+pi); 
+rbisvec = - 16*cos(4*tvec+pi);
+y1 = rvec .* cos(tvec);
+y2 = rvec .* sin(tvec);
+nu1 = rvec .* cos(tvec) + rprimvec .* sin(tvec);
+nu2 = rvec .* sin(tvec) - rprimvec .* cos(tvec);
+nu1 = nu1 ./ sqrt( rvec.^2 + rprimvec.^2 );
+nu2 = nu2 ./ sqrt( rvec.^2 + rprimvec.^2 );
+
+Kmat = zeros(N, N); % Kernel matrix
+for i=1:N
+    for j=1:N
+        if i == j % diagonal case -> limit
+            % Kmat(i,j) = 1 / (2*pi) * ( ...
+            %     rprimvec(i)^2 - rbisvec(i) * rvec(i) / 2 + rvec(i)^2 / 2 ...
+            %     ) / (rprimvec(i)^2 + rvec(i)^2)^(3/2);
+        else % the regular kernel
+            % Kmat(i,j) = 1 / (2*pi) * ( ...
+            %     (y1(j) - y1(i)) * nu1(j) + (y2(j) - y2(i)) * nu2(j) ...
+            %     ) / ( (y1(j) - y1(i))^2 + (y2(j) - y2(i))^2 )
+            
+            abs_ = sqrt( (y1(j)-y1(i))^2 + (y2(j)-y2(i))^2 );
+            Kmat(i,j) = k*i / (4*abs_) * ( (y1(j) - y1(i)) * nu1(j) + (y2(j) - y2(i)) * nu2(j) ) * besselh(0, k*abs_);
+        end
+    end
+end
+
+% Plot kernel
+% imagesc(tvec, tvec, Kmat.')
+% axis xy
+% colorbar
+
+dsdt = sqrt(rprimvec.^2 + rvec.^2)'; % diagonal of Sigma matrix
+% Boundary condition
+gvec = ( exp( (y1 + 0.3*y2) / 3 ) .* sin( (0.3*y1 - y2) / 3 ) )';
+% Solve (I/2 + 2pi/N K Sigma)h = g
+hvec = ( eye(N)/2 + 2*pi/N * Kmat * diag(dsdt) ) \ gvec;
